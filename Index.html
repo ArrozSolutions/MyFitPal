@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyFitnessPal Precision - Medical AI Fitness</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        heading: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        medical: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9', // Sky Blue (Medical)
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        },
+                        ai: {
+                            50: '#f5f3ff',
+                            500: '#8b5cf6', // Violet (AI)
+                            600: '#7c3aed',
+                        },
+                        dark: '#0f172a',
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 40px -10px rgba(0,0,0,0.08)',
+                        'glow': '0 0 20px rgba(139, 92, 246, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* --- FLIP CARD CSS --- */
+        .flip-card {
+            background-color: transparent;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            inset: 0;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .flip-card-front {
+            background-color: white;
+            border: 1px solid #e2e8f0;
+        }
+
+        .flip-card-back {
+            background: linear-gradient(135deg, #0f172a 0%, #0ea5e9 100%);
+            transform: rotateY(180deg);
+            color: white;
+            border: 1px solid #0ea5e9;
+        }
+        /* --------------------------- */
+
+        /* Smooth Fade In */
+        .fade-in { animation: fadeIn 0.8s ease-out forwards; opacity: 0; transform: translateY(20px); }
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Modal Transitions */
+        .modal { transition: opacity 0.3s ease, visibility 0.3s ease; }
+        .modal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .modal.flex { opacity: 1; visibility: visible; pointer-events: auto; }
+
+        /* Engaging Modal Animation */
+        @keyframes modalPop {
+            0% { opacity: 0; transform: scale(0.95) translateY(10px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-content-animate {
+            animation: modalPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="bg-white text-slate-800 font-sans antialiased overflow-x-hidden">
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 shadow-sm transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-24">
+                <!-- Logo -->
+                <div class="flex-shrink-0 flex items-center gap-3">
+                    <!-- LOGO PLACEHOLDER: Replace src below with your actual logo file -->
+                    <div class="h-12 w-12 bg-gradient-to-br from-medical-500 to-ai-500 rounded-xl flex items-center justify-center text-white text-2xl shadow-lg">
+                        <i class="fa-solid fa-heart-pulse"></i>
+                    </div>
+                    <div>
+                        <span class="font-heading font-bold text-2xl text-slate-900 leading-tight block">MyFitnessPal</span>
+                        <span class="text-xs font-semibold text-medical-600 tracking-widest uppercase">Precision</span>
+                    </div>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden lg:flex items-center space-x-10">
+                    <a href="#features" class="text-lg font-medium text-slate-600 hover:text-medical-600 transition-colors">Features</a>
+                    <a href="#how-it-works" class="text-lg font-medium text-slate-600 hover:text-medical-600 transition-colors">How it Works</a>
+                    <a href="#ai-coach" class="text-lg font-medium text-slate-600 hover:text-ai-600 transition-colors">AI Coach</a>
+                    <a href="#myth-buster" class="text-lg font-medium text-slate-600 hover:text-medical-600 transition-colors">Myths</a>
+                    <a href="#pricing" class="text-lg font-medium text-slate-600 hover:text-medical-600 transition-colors">Pricing</a>
+                </div>
+
+                <!-- CTA Buttons & WhatsApp -->
+                <div class="hidden lg:flex items-center space-x-5">
+                    <!-- WhatsApp Button -->
+                    <a href="https://wa.me/918435182314?text=Hi%20MyFitnessPal%20Precision%2C%20I%20have%20a%20query%20about%20your%20plans." target="_blank" class="flex items-center gap-2 text-lg font-medium text-slate-600 hover:text-green-600 transition-colors" title="Chat with us on WhatsApp">
+                        <i class="fab fa-whatsapp text-2xl text-green-500"></i> <span class="hidden xl:inline">Chat</span>
+                    </a>
+                    
+                    <div class="h-6 w-px bg-slate-300"></div>
+
+                    <button onclick="toggleLogin()" class="text-lg font-medium text-slate-900 hover:text-medical-600 px-2 py-2">
+                        Log In
+                    </button>
+                    <!-- UPDATED: Get Started now scrolls to Pricing -->
+                    <button onclick="document.getElementById('pricing').scrollIntoView({behavior: 'smooth'})" class="bg-slate-900 text-white px-8 py-3 rounded-full text-lg font-semibold hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                        Get Started
+                    </button>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="lg:hidden flex items-center">
+                    <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="text-slate-900 p-2">
+                        <i class="fas fa-bars text-3xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden lg:hidden bg-white border-t border-slate-100 absolute w-full shadow-lg">
+            <div class="px-4 pt-4 pb-6 space-y-2">
+                <a href="#features" class="block px-3 py-3 rounded-lg text-lg font-medium text-slate-700 hover:bg-slate-50">Features</a>
+                <a href="#how-it-works" class="block px-3 py-3 rounded-lg text-lg font-medium text-slate-700 hover:bg-slate-50">How it Works</a>
+                <a href="#ai-coach" class="block px-3 py-3 rounded-lg text-lg font-medium text-slate-700 hover:bg-slate-50">AI Coach</a>
+                <a href="#myth-buster" class="block px-3 py-3 rounded-lg text-lg font-medium text-slate-700 hover:bg-slate-50">Myth Buster</a>
+                <a href="#pricing" class="block px-3 py-3 rounded-lg text-lg font-medium text-slate-700 hover:bg-slate-50">Pricing</a>
+                
+                <!-- Mobile WhatsApp Link -->
+                <a href="https://wa.me/918435182314?text=Hi%20MyFitnessPal%20Precision%2C%20I%20have%20a%20query." target="_blank" class="block px-3 py-3 rounded-lg text-lg font-bold text-green-600 hover:bg-green-50 flex items-center gap-2">
+                    <i class="fab fa-whatsapp text-xl"></i> Chat on WhatsApp
+                </a>
+
+                <button onclick="toggleLogin()" class="w-full mt-2 bg-medical-50 text-medical-700 px-4 py-3 rounded-lg font-bold">Log In</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-slate-50">
+        <!-- Background Elements -->
+        <div class="absolute top-0 right-0 w-1/2 h-full bg-medical-50/50 rounded-bl-[100px] -z-10"></div>
+        <div class="absolute bottom-0 left-0 w-96 h-96 bg-ai-50 rounded-full blur-3xl -z-10 opacity-70"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-16">
+            
+            <!-- Text Content -->
+            <div class="lg:w-1/2 fade-in" style="animation-delay: 0.1s;">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 shadow-sm mb-8">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    <span class="text-sm font-semibold text-slate-600">Integrated with 200+ Lab Diagnostics</span>
+                </div>
+                <h1 class="text-5xl lg:text-7xl font-heading font-bold text-slate-900 leading-[1.1] mb-6">
+                    Your Body is Science. <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-medical-600 to-ai-600">Treat it with Precision.</span>
+                </h1>
+                <p class="text-xl text-slate-600 mb-10 leading-relaxed max-w-lg">
+                    Stop guessing. We use your <strong>Bloodwork, DNA,</strong> and <strong>Medical History</strong> (PCOS, Thyroid, etc.) to build an AI-powered plan that actually works.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <!-- UPDATED: Upload Button now simulates file selection -->
+                    <button onclick="document.getElementById('lab-report-upload').click()" class="bg-medical-600 text-white px-8 py-4 rounded-xl text-lg font-bold shadow-lg hover:bg-medical-700 transition-all flex items-center justify-center gap-3">
+                        <i class="fas fa-file-medical-alt"></i> Upload Lab Report
+                    </button>
+                    <!-- Hidden File Input -->
+                    <input type="file" id="lab-report-upload" class="hidden" accept=".pdf,.jpg,.png" onchange="alert('Simulated Upload Complete! Our AI is now analyzing your report...')">
+
+                    <button onclick="toggleDemo()" class="bg-white text-slate-700 border border-slate-200 px-8 py-4 rounded-xl text-lg font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-3">
+                        <i class="fas fa-play-circle text-ai-600"></i> View Demo
+                    </button>
+                </div>
+            </div>
+
+            <!-- Hero Visual -->
+            <div class="lg:w-1/2 relative fade-in" style="animation-delay: 0.3s;">
+                <div class="relative z-10 bg-white rounded-3xl p-6 shadow-2xl border border-slate-100 transform rotate-1 hover:rotate-0 transition-transform duration-500">
+                    <!-- Mockup UI -->
+                    <div class="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="h-10 w-10 bg-slate-100 rounded-full flex items-center justify-center"><i class="fas fa-user text-slate-500"></i></div>
+                            <div>
+                                <div class="font-bold text-slate-900">Sunil Kumar</div>
+                                <div class="text-xs text-slate-500">Report ID: #8291A • Status: <span class="text-red-500 font-bold">High Sugar</span></div>
+                            </div>
+                        </div>
+                        <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">AI Analysis Ready</span>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="flex gap-4 p-4 bg-slate-50 rounded-xl">
+                            <div class="text-medical-600"><i class="fas fa-exclamation-triangle"></i></div>
+                            <div class="text-sm">
+                                <span class="font-bold block text-slate-900">Avoid: Dates & Raisins</span>
+                                <span class="text-slate-500">Your blood sugar levels (140 mg/dL) suggest avoiding high glycemic index fruits.</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 p-4 bg-slate-50 rounded-xl">
+                            <div class="text-ai-600"><i class="fas fa-dumbbell"></i></div>
+                            <div class="text-sm">
+                                <span class="font-bold block text-slate-900">Recommended: Low Impact Cardio</span>
+                                <span class="text-slate-500">Based on slight knee deformity detected in form analysis.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Floating Badge -->
+                <div class="absolute -bottom-6 -left-6 bg-white p-4 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-3 animate-bounce" style="animation-duration: 3s;">
+                    <div class="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-xl">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-900">AI Form Correction</div>
+                        <div class="text-xs text-slate-500">Active Tracking</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Comprehensive Features Grid -->
+    <section id="features" class="py-24 bg-white relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-20">
+                <span class="text-ai-600 font-bold tracking-widest uppercase text-sm">360° Health Ecosystem</span>
+                <h2 class="text-4xl font-heading font-bold text-slate-900 mt-3 mb-6">Everything your body needs,<br>verified by science.</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="group p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:border-medical-200 hover:shadow-xl hover:shadow-medical-500/10 transition-all duration-300">
+                    <div class="h-14 w-14 bg-white rounded-2xl flex items-center justify-center text-medical-600 text-2xl shadow-sm mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-dna"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">Lab-Based Customization</h3>
+                    <p class="text-slate-600 leading-relaxed">Diet & Workouts tailored to your Lipid Profile, Kidney Function, and Blood Sugar. We adjust for deformities and medical conditions.</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="group p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:border-medical-200 hover:shadow-xl hover:shadow-medical-500/10 transition-all duration-300">
+                    <div class="h-14 w-14 bg-white rounded-2xl flex items-center justify-center text-green-600 text-2xl shadow-sm mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-user-doctor"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">24/7 Medical Support</h3>
+                    <p class="text-slate-600 leading-relaxed">Instant access to certified Doctors, Trainers, and Dieticians. Get professional medical advice anytime via chat or video call.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="group p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:border-medical-200 hover:shadow-xl hover:shadow-medical-500/10 transition-all duration-300">
+                    <div class="h-14 w-14 bg-white rounded-2xl flex items-center justify-center text-ai-600 text-2xl shadow-sm mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-crosshairs"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">AI Form Correction</h3>
+                    <p class="text-slate-600 leading-relaxed">Our AI analyzes your movement via camera to correct posture in real-time, preventing injury whether at home or the gym.</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="group p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:border-medical-200 hover:shadow-xl hover:shadow-medical-500/10 transition-all duration-300">
+                    <div class="h-14 w-14 bg-white rounded-2xl flex items-center justify-center text-orange-500 text-2xl shadow-sm mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">Subsidized Ecosystem</h3>
+                    <p class="text-slate-600 leading-relaxed">Unlock exclusive low rates for diagnostic Lab Tests and Premium Gym Memberships across the country through our partnerships.</p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="group p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:border-medical-200 hover:shadow-xl hover:shadow-medical-500/10 transition-all duration-300">
+                    <div class="h-14 w-14 bg-white rounded-2xl flex items-center justify-center text-pink-500 text-2xl shadow-sm mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">Holistic Tracking</h3>
+                    <p class="text-slate-600 leading-relaxed">Integrated calorie counter, water intake reminders, and macro tracking that syncs directly with your medical profile.</p>
+                </div>
+
+                <!-- Feature 6 (Chatbot Highlight) -->
+                <div class="group p-8 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-xl transform lg:-translate-y-4">
+                    <div class="h-14 w-14 bg-white/10 rounded-2xl flex items-center justify-center text-ai-500 text-2xl shadow-sm mb-6 backdrop-blur-sm">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Personal AI Companion</h3>
+                    <p class="text-slate-300 leading-relaxed mb-4">"Can I eat pizza tonight?" Your AI knows your bloodwork and gives personalized answers, cheat day alternatives, and exercise swaps.</p>
+                    <a href="#ai-coach" class="text-ai-400 font-bold hover:text-white transition-colors flex items-center gap-2">Try it below <i class="fas fa-arrow-down"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NEW SECTION: How It Works -->
+    <section id="how-it-works" class="py-24 bg-medical-50 relative overflow-hidden">
+        <!-- Connecting Line Background (Desktop) -->
+        <div class="hidden md:block absolute top-[40%] left-0 w-full h-1 bg-gradient-to-r from-transparent via-medical-200 to-transparent z-0"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16">
+                <span class="text-medical-600 font-bold tracking-widest uppercase text-sm">The Process</span>
+                <h2 class="text-4xl font-heading font-bold text-slate-900 mt-2">Simple Steps to a New You</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Step 1 -->
+                <div class="flex flex-col items-center text-center group">
+                    <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center border-4 border-medical-100 shadow-lg mb-6 group-hover:scale-110 transition-transform z-10">
+                        <i class="fas fa-user-edit text-2xl text-medical-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">1. Profile Setup</h3>
+                    <p class="text-slate-600 text-sm">Enter basic details about your lifestyle, age, and goals.</p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="flex flex-col items-center text-center group">
+                    <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center border-4 border-medical-100 shadow-lg mb-6 group-hover:scale-110 transition-transform z-10">
+                        <i class="fas fa-flask text-2xl text-ai-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">2. Smart Diagnostics</h3>
+                    <p class="text-slate-600 text-sm">Get lab test results based on our AI's requirements.</p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="flex flex-col items-center text-center group">
+                    <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center border-4 border-medical-100 shadow-lg mb-6 group-hover:scale-110 transition-transform z-10">
+                        <i class="fas fa-stethoscope text-2xl text-medical-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">3. Doctor Verification</h3>
+                    <p class="text-slate-600 text-sm">Doctors verify data to generate your custom diet & workout.</p>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="flex flex-col items-center text-center group">
+                    <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center border-4 border-medical-100 shadow-lg mb-6 group-hover:scale-110 transition-transform z-10">
+                        <i class="fas fa-chart-line text-2xl text-green-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">4. Continuous Care</h3>
+                    <p class="text-slate-600 text-sm">Continuous tracking with support from certified medical pros.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Detailed AI Chatbot Section -->
+    <section id="ai-coach" class="py-24 bg-white overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-16">
+            
+            <div class="lg:w-1/2">
+                <span class="bg-ai-100 text-ai-700 px-3 py-1 rounded-full text-sm font-bold mb-4 inline-block">Feature Spotlight</span>
+                <h2 class="text-4xl font-heading font-bold text-slate-900 mb-6">Your Personal Health Intelligence.</h2>
+                <p class="text-lg text-slate-600 mb-8">
+                    Unlike generic bots, our AI has context. It knows you have <strong>Lactose Intolerance</strong>, it knows your <strong>Creatinine levels</strong> are high, and it suggests food alternatives accordingly.
+                </p>
+                
+                <ul class="space-y-6">
+                    <li class="flex items-start gap-4">
+                        <div class="h-10 w-10 rounded-full bg-slate-50 flex items-center justify-center text-green-500 shadow-sm shrink-0"><i class="fas fa-check"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-900">Instant Food Alternatives</h4>
+                            <p class="text-slate-500 text-sm">Ask for a substitute for Paneer if you're vegan, get a protein-matched answer instantly.</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-4">
+                        <div class="h-10 w-10 rounded-full bg-slate-50 flex items-center justify-center text-green-500 shadow-sm shrink-0"><i class="fas fa-check"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-900">Cheat Day Management</h4>
+                            <p class="text-slate-500 text-sm">"I ate a burger. What now?" The AI adjusts your dinner plan to keep you in a deficit.</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Chat Interface Simulation -->
+            <div class="lg:w-1/2 w-full">
+                <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden max-w-md mx-auto">
+                    <div class="bg-slate-900 p-4 flex items-center gap-3">
+                        <div class="h-10 w-10 rounded-full bg-gradient-to-r from-medical-500 to-ai-500 p-0.5">
+                            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=MyFitnessPal" alt="AI" class="bg-white rounded-full">
+                        </div>
+                        <div>
+                            <h3 class="text-white font-bold">Precision AI</h3>
+                            <p class="text-slate-400 text-xs">Online • Accessing Lab Report #8291A...</p>
+                        </div>
+                    </div>
+                    <div class="p-6 h-[400px] bg-slate-50 overflow-y-auto space-y-4" id="demo-chat-body">
+                        <!-- Messages -->
+                        <div class="flex justify-end">
+                            <div class="bg-medical-600 text-white p-3 rounded-2xl rounded-tr-none text-sm max-w-[85%] shadow-md">
+                                I'm craving something sweet, but my sugar was high in the last test. What can I eat?
+                            </div>
+                        </div>
+                        <div class="flex justify-start">
+                            <div class="bg-white text-slate-700 p-3 rounded-2xl rounded-tl-none text-sm max-w-[85%] border border-slate-100 shadow-sm">
+                                <span class="text-xs font-bold text-ai-600 block mb-1">Checking Report... Sugar Level: 140mg/dL</span>
+                                Since your blood sugar is elevated, avoid dates or candy. <br><br>
+                                <strong>Try this instead:</strong><br>
+                                Greek Yogurt with a handful of blueberries. It has a low Glycemic Index (GI 53) and won't spike your insulin.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-white border-t border-slate-100">
+                        <div class="flex gap-2">
+                            <input type="text" placeholder="Ask about your diet..." class="flex-1 bg-slate-50 border border-slate-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-medical-500">
+                            <button class="h-9 w-9 bg-medical-600 rounded-full text-white flex items-center justify-center hover:bg-medical-700"><i class="fas fa-paper-plane text-xs"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Myth Buster Section -->
+    <section id="myth-buster" class="py-24 bg-slate-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="text-medical-600 font-bold tracking-widest uppercase text-sm">Verified by PubMed</span>
+                <h2 class="text-4xl font-heading font-bold text-slate-900 mt-2">Busting Industry Lies</h2>
+                <p class="text-slate-600 mt-4">Click any card below to flip and reveal the truth.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                
+                <!-- Card 1 -->
+                <div class="flip-card h-[400px]" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <!-- Front -->
+                        <div class="flip-card-front bg-white border border-slate-200">
+                            <div class="flex flex-col items-center">
+                                <div class="h-16 w-16 bg-red-50 rounded-full flex items-center justify-center mb-6">
+                                    <i class="fas fa-pills text-3xl text-red-500"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-900 mb-3">"Fat Burners"</h3>
+                                <p class="text-slate-600 text-sm leading-relaxed px-2">"Take this pill to melt belly fat instantly without gym."</p>
+                            </div>
+                            <span class="w-full py-3 bg-slate-50 rounded-xl text-slate-600 text-xs font-bold uppercase tracking-wide hover:bg-slate-100 transition border border-slate-100">
+                                <i class="fas fa-sync mr-2"></i> Reveal Truth
+                            </span>
+                        </div>
+                        <!-- Back -->
+                        <div class="flip-card-back bg-gradient-to-br from-slate-900 to-medical-900 border border-medical-500">
+                            <div class="flex flex-col items-center">
+                                <div class="h-16 w-16 bg-green-500/20 rounded-full flex items-center justify-center mb-6 border border-green-500/30">
+                                    <i class="fas fa-check text-3xl text-green-400"></i>
+                                </div>
+                                <h3 class="text-lg font-bold text-white mb-3">The Reality</h3>
+                                <p class="text-slate-300 text-sm leading-relaxed px-2">Most "burners" are just high caffeine. No pill overrides a calorie surplus. Only a caloric deficit reduces fat mass.</p>
+                            </div>
+                            <span class="text-[10px] bg-white/10 px-3 py-1.5 rounded-full text-white/70">Ref: PubMed ID 21951331</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="flip-card h-[400px]" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <!-- Front -->
+                        <div class="flip-card-front bg-white border border-slate-200">
+                            <div class="flex flex-col items-center">
+                                <div class="h-16 w-16 bg-red-50 rounded-full flex items-center justify-center mb-6">
+                                    <i class="fas fa-bread-slice text-3xl text-red-500"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-900 mb-3">"No Carbs at Night"</h3>
+                                <p class="text-slate-600 text-sm leading-relaxed px-2">"Eating carbs after 6PM turns directly into fat."</p>
+                            </div>
+                            <span class="w-full py-3 bg-slate-50 rounded-xl text-slate-600 text-xs font-bold uppercase tracking-wide hover:bg-slate-100 transition border border-slate-100">
+                                <i class="fas fa-sync mr-2"></i> Reveal Truth
+                            </span>
+                        </div>
+                        <!-- Back -->
+                        <div class="flip-card-back bg-gradient-to-br from-slate-900 to-medical-900 border border-medical-500">
+                            <div class="flex flex-col items-center">
+                                <div class="h-16 w-16 bg-green-500/20 rounded-full flex items-center justify-center mb-6 border border-green-500/30">
+                                    <i class="fas fa-check text-3xl text-green-400"></i>
+                                </div>
+                                <h3 class="text-lg font-bold text-white mb-3">The Reality</h3>
+                                <p class="text-slate-300 text-sm leading-relaxed px-2">Your metabolism doesn't stop at night. Total daily calorie intake vs. expenditure is what matters.</p>
+                            </div>
+                            <span class="text-[10px] bg-white/10 px-3 py-1.5 rounded-full text-white/70">Ref: PubMed ID 28446383</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="flip-card h-[400px]" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <!-- Front -->
+                        <div class="flip-card-front bg-white border border-slate-200">
+                            <div class="flex flex-col items-center">
+                                <div class="h-16 w-16 bg-red-50 rounded-full flex items-center justify-center mb-6">
+                                    <i class="fas fa-leaf text-3xl text-red-500"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-900 mb-3">"Detox Teas"</h3>
+                                <p class="text-slate-600 text-sm leading-relaxed px-2">"You need to cleanse your toxins with this expensive tea."</p>
+                            </div>
+                            <span class="w-full py-3 bg-slate-50 rounded-xl text-slate-600 text-xs font-bold uppercase tracking-wide hover:bg-slate-100 transition border border-slate-100">
+                                <i class="fas fa-sync mr-2"></i> Reveal Truth
+                            </span>
+                        </div>
+                        <!-- Back -->
+                        <div class="flip-card-back bg-gradient-to-br from-slate-900 to-medical-900 border border-medical-500">
+                            <div class="flex flex-col items-center">
+                                <div class="h-16 w-16 bg-green-500/20 rounded-full flex items-center justify-center mb-6 border border-green-500/30">
+                                    <i class="fas fa-check text-3xl text-green-400"></i>
+                                </div>
+                                <h3 class="text-lg font-bold text-white mb-3">The Reality</h3>
+                                <p class="text-slate-300 text-sm leading-relaxed px-2">Your Liver and Kidneys are the only detox system you need. Teas often just act as laxatives.</p>
+                            </div>
+                            <span class="text-[10px] bg-white/10 px-3 py-1.5 rounded-full text-white/70">Ref: NIH Clinical Digest</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="flip-card h-[400px]" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <!-- Front -->
+                        <div class="flip-card-front bg-white border border-slate-200">
+                            <div class="flex flex-col items-center">
+                                <div class="h-16 w-16 bg-red-50 rounded-full flex items-center justify-center mb-6">
+                                    <i class="fas fa-dumbbell text-3xl text-red-500"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-900 mb-3">"Spot Reduction"</h3>
+                                <p class="text-slate-600 text-sm leading-relaxed px-2">"Do crunches to burn belly fat specifically."</p>
+                            </div>
+                            <span class="w-full py-3 bg-slate-50 rounded-xl text-slate-600 text-xs font-bold uppercase tracking-wide hover:bg-slate-100 transition border border-slate-100">
+                                <i class="fas fa-sync mr-2"></i> Reveal Truth
+                            </span>
+                        </div>
+                        <!-- Back -->
+                        <div class="flip-card-back bg-gradient-to-br from-slate-900 to-medical-900 border border-medical-500">
+                            <div class="flex flex-col items-center">
+                                <div class="h-16 w-16 bg-green-500/20 rounded-full flex items-center justify-center mb-6 border border-green-500/30">
+                                    <i class="fas fa-check text-3xl text-green-400"></i>
+                                </div>
+                                <h3 class="text-lg font-bold text-white mb-3">The Reality</h3>
+                                <p class="text-slate-300 text-sm leading-relaxed px-2">Fat loss is systemic. Genetics determine where you lose fat first, not the specific exercise.</p>
+                            </div>
+                            <span class="text-[10px] bg-white/10 px-3 py-1.5 rounded-full text-white/70">Ref: Yale Scientific</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-heading font-bold text-slate-900 mb-4">Simple, Transparent Pricing</h2>
+                <p class="text-slate-600">Invest in your health with plans designed for Students and Professionals.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+                
+                <!-- Free -->
+                <div class="p-8 bg-slate-50 rounded-3xl border border-slate-200 hover:border-medical-200 transition-colors">
+                    <h3 class="text-slate-500 font-bold uppercase tracking-wider text-sm">Starter</h3>
+                    <div class="my-4"><span class="text-4xl font-bold text-slate-900">Free</span></div>
+                    <ul class="space-y-4 mb-8 text-sm text-slate-600">
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 mr-3"></i> Basic Calorie Tracking</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 mr-3"></i> Water Reminder</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-500 mr-3"></i> Myth Buster Access</li>
+                    </ul>
+                    <button class="w-full py-3 border border-slate-300 rounded-xl font-bold text-slate-700 hover:bg-slate-100 transition-colors">Start Free</button>
+                </div>
+
+                <!-- Tier 2 -->
+                <div class="p-8 bg-slate-50 rounded-3xl border border-slate-200 relative hover:border-medical-200 transition-colors">
+                    <h3 class="text-medical-600 font-bold uppercase tracking-wider text-sm">Tier 2</h3>
+                    <div class="my-4"><span class="text-4xl font-bold text-slate-900">₹2,499</span><span class="text-slate-500">/mo</span></div>
+                    <ul class="space-y-4 mb-8 text-sm text-slate-600">
+                        <li class="flex items-center"><i class="fas fa-check text-medical-500 mr-3"></i> <strong>2 Doctor</strong> Sessions</li>
+                        <li class="flex items-center"><i class="fas fa-check text-medical-500 mr-3"></i> <strong>8 Trainer</strong> Sessions</li>
+                        <li class="flex items-center"><i class="fas fa-check text-medical-500 mr-3"></i> <strong>3 Dietician</strong> Sessions</li>
+                        <li class="flex items-center"><i class="fas fa-check text-medical-500 mr-3"></i> Subsidized Lab Rates</li>
+                    </ul>
+                    <button class="w-full py-3 bg-medical-100 text-medical-700 rounded-xl font-bold hover:bg-medical-200 transition-colors">Select Plan</button>
+                </div>
+
+                <!-- Tier 1 (High End) -->
+                <div class="p-8 bg-slate-900 rounded-3xl text-white relative shadow-2xl transform md:-translate-y-6 border border-slate-800">
+                    <div class="absolute top-0 right-0 bg-gradient-to-r from-medical-500 to-ai-500 text-white text-xs font-bold px-4 py-1.5 rounded-bl-xl rounded-tr-2xl">ULTIMATE</div>
+                    <h3 class="text-medical-400 font-bold uppercase tracking-wider text-sm">Tier 1</h3>
+                    <div class="my-4"><span class="text-4xl font-bold">₹4,999</span><span class="text-slate-400">/mo</span></div>
+                    <ul class="space-y-4 mb-8 text-sm text-slate-300">
+                        <li class="flex items-center"><i class="fas fa-check text-medical-400 mr-3"></i> <strong>4 Doctor</strong> Sessions</li>
+                        <li class="flex items-center"><i class="fas fa-check text-medical-400 mr-3"></i> <strong>14 Trainer</strong> Sessions</li>
+                        <li class="flex items-center"><i class="fas fa-check text-medical-400 mr-3"></i> <strong>6 Dietician</strong> Sessions</li>
+                        <li class="flex items-center"><i class="fas fa-check text-medical-400 mr-3"></i> <strong>Subsidized Gym Membership</strong></li>
+                        <li class="flex items-center"><i class="fas fa-check text-medical-400 mr-3"></i> Full AI Form Correction</li>
+                    </ul>
+                    <button class="w-full py-3 bg-gradient-to-r from-medical-600 to-ai-600 rounded-xl font-bold hover:shadow-lg transition-all">Get Ultimate</button>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-50 pt-20 pb-10 border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i class="fas fa-heart-pulse text-medical-600 text-2xl"></i>
+                        <span class="font-heading font-bold text-xl text-slate-900">MyFitnessPal</span>
+                    </div>
+                    <p class="text-slate-500 max-w-sm">The first platform to combine lab diagnostics with fitness coaching. Science-backed, doctor-approved, and built for your unique biology.</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-900 mb-4">Platform</h4>
+                    <ul class="space-y-2 text-slate-500 text-sm">
+                        <li><a href="#" class="hover:text-medical-600">Lab Diagnostics</a></li>
+                        <li><a href="#" class="hover:text-medical-600">AI Coach</a></li>
+                        <li><a href="#" class="hover:text-medical-600">Find Doctors</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-900 mb-4">Legal</h4>
+                    <ul class="space-y-2 text-slate-500 text-sm">
+                        <li><a href="#" class="hover:text-medical-600">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-medical-600">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-medical-600">Medical Disclaimer</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-slate-200 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-slate-500 text-sm">&copy; 2024 MyFitnessPal Precision. All rights reserved.</p>
+                <div class="flex space-x-4 mt-4 md:mt-0">
+                    <a href="#" class="text-slate-400 hover:text-medical-600"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-slate-400 hover:text-medical-600"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Dummy Login Modal (Fixed & Redesigned) -->
+    <div id="login-modal" class="fixed inset-0 z-[100] w-screen h-screen flex items-center justify-center bg-slate-900/70 backdrop-blur-md hidden modal transition-all duration-300">
+        <!-- Modal Container -->
+        <div class="bg-white rounded-[2rem] p-0 w-full max-w-md shadow-2xl relative modal-content-animate overflow-hidden mx-4">
+            
+            <!-- Decor Header -->
+            <div class="h-32 bg-gradient-to-r from-medical-600 to-ai-600 relative overflow-hidden">
+                <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-white/20 rounded-full blur-2xl"></div>
+                <div class="absolute top-10 left-10 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
+                
+                <!-- Close Button Fixed: z-101 ensures it's above everything -->
+                <button onclick="toggleLogin()" class="absolute top-4 right-4 bg-black/20 hover:bg-black/30 text-white w-8 h-8 rounded-full flex items-center justify-center transition-all backdrop-blur-sm cursor-pointer z-[101]">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+
+                <div class="absolute bottom-0 left-0 w-full p-8 text-white">
+                    <h2 class="text-3xl font-heading font-bold mb-1">Welcome Back!</h2>
+                    <p class="text-white/80 text-sm">Continue your precision health journey.</p>
+                </div>
+            </div>
+
+            <!-- Login Form -->
+            <div class="p-8 pt-6">
+                <!-- Google Button -->
+                <button class="w-full py-3.5 border border-slate-200 rounded-xl flex items-center justify-center gap-3 hover:bg-slate-50 hover:border-slate-300 transition-all group shadow-sm mb-6">
+                    <img src="https://www.google.com/favicon.ico" alt="Google" class="w-5 h-5 group-hover:scale-110 transition-transform">
+                    <span class="font-bold text-slate-700">Continue with Google</span>
+                </button>
+
+                <!-- Divider -->
+                <div class="relative flex py-2 items-center mb-6">
+                    <div class="flex-grow border-t border-slate-100"></div>
+                    <span class="flex-shrink mx-4 text-slate-400 text-xs uppercase tracking-wider font-semibold">Or log in with email</span>
+                    <div class="flex-grow border-t border-slate-100"></div>
+                </div>
+
+                <!-- Inputs -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Email Address</label>
+                        <div class="relative">
+                            <i class="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input type="email" placeholder="sunil@example.com" class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-medical-500 focus:ring-4 focus:ring-medical-500/10 transition-all font-medium text-slate-900 bg-slate-50 focus:bg-white">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Password</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input type="password" placeholder="••••••••" class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-medical-500 focus:ring-4 focus:ring-medical-500/10 transition-all font-medium text-slate-900 bg-slate-50 focus:bg-white">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <button onclick="toggleLogin(); alert('Logged in successfully! (Prototype Only)')" class="w-full mt-8 py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-medical-600 transition-colors shadow-lg shadow-slate-900/20 flex items-center justify-center gap-2 group">
+                    Sign In to Dashboard <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </button>
+
+                <!-- Footer Link -->
+                <p class="text-center mt-6 text-sm text-slate-500">
+                    Don't have an account? <a href="#" class="text-medical-600 font-bold hover:underline">Create Profile</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demo Video Modal -->
+    <div id="demo-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/90 hidden modal">
+        <div class="w-full max-w-4xl p-4">
+            <div class="flex justify-end mb-2">
+                <button onclick="toggleDemo()" class="text-white hover:text-medical-400"><i class="fas fa-times text-2xl"></i></button>
+            </div>
+            <div class="aspect-video bg-black rounded-2xl flex items-center justify-center border border-slate-700 relative overflow-hidden group">
+                <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=2070&auto=format&fit=crop" class="absolute inset-0 w-full h-full object-cover opacity-50">
+                <div class="text-center relative z-10">
+                    <div class="h-20 w-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white text-4xl mb-4 mx-auto border border-white/30 cursor-pointer hover:scale-110 transition-transform">
+                        <i class="fas fa-play ml-1"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white">Watch How It Works</h3>
+                    <p class="text-slate-300">AI Analysis & Form Correction Demo</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Widget (Bottom Right) -->
+    <div class="fixed bottom-6 right-6 z-40">
+        <div id="chat-widget" class="hidden absolute bottom-16 right-0 w-80 bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden flex flex-col h-96">
+            <div class="bg-slate-900 text-white p-4 font-bold flex justify-between items-center">
+                <span><i class="fas fa-robot mr-2"></i>Quick Assist</span>
+                <button onclick="toggleWidget()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50">
+                <div class="bg-white p-3 rounded-lg rounded-tl-none text-sm text-slate-600 shadow-sm border border-slate-100">
+                    Hi! I'm here for quick questions. For detailed report analysis, check the AI Coach section!
+                </div>
+            </div>
+            <div class="p-3 bg-white border-t border-slate-100">
+                <input type="text" placeholder="Type here..." class="w-full bg-slate-50 border border-slate-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-medical-500">
+            </div>
+        </div>
+        <button onclick="toggleWidget()" class="h-14 w-14 rounded-full bg-slate-900 text-white text-2xl flex items-center justify-center shadow-xl hover:bg-medical-600 transition-colors">
+            <i class="fas fa-comment-dots"></i>
+        </button>
+    </div>
+
+    <script>
+        // Modal Logic
+        function toggleLogin() {
+            const modal = document.getElementById('login-modal');
+            
+            // Toggle Logic: If hidden, remove hidden and add flex. Else do opposite.
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function toggleDemo() {
+            const modal = document.getElementById('demo-modal');
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function toggleWidget() {
+            const widget = document.getElementById('chat-widget');
+            widget.classList.toggle('hidden');
+        }
+
+        // Close modals on outside click
+        window.onclick = function(event) {
+            const loginModal = document.getElementById('login-modal');
+            const demoModal = document.getElementById('demo-modal');
+            if (event.target == loginModal) {
+                toggleLogin();
+            }
+            if (event.target == demoModal) {
+                toggleDemo();
+            }
+        }
+    </script>
+</body>
+</html>
